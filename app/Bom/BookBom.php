@@ -29,7 +29,7 @@ class BookBom {
      * @return Resultset
      */
     public function processSearch($request) {
-        $book = $this->books;
+        $books =  $this->books;
 
         if(isset($request->ddSearchType) && $request->filled('ddSearchType')) {
             if(isset($request->txtKeywords) && $request->filled('txtKeywords')) {
@@ -49,7 +49,7 @@ class BookBom {
     */
     public function processExportToXml($request) {
 
-        $books =  $this->books;
+        $books =  $this->books->get();
         $xml = new XMLWriter();
         $xml->openMemory();
         $xml->startDocument();
@@ -81,7 +81,7 @@ class BookBom {
     * @return csv file
    */
     public function processExportToCsv($request) {
-        $books = $this->books;
+        $books = $this->books->get();
         $fileName = "exported_data_" . strtotime(date('Y-m-d H:i:s'));
 
         $bookArray = array();
@@ -108,7 +108,7 @@ class BookBom {
     }
 
     public function getBookRecords() {
-        return Book::where('flag',1)->get();
+        return Book::where('flag',1);
     }
     
 
