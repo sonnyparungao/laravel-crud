@@ -34,6 +34,7 @@
 
                       <div class="col-auto my-1">
                           <button type="submit" name="btnSearch" class="btn btn-primary">Search</button>
+						  <a href="{{url('books')}}" class="btn btn-danger">Clear Filters</a>
                       </div>
                   </div>
               </form>
