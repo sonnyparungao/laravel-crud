@@ -17,7 +17,9 @@ class CreateBooksTable extends Migration
             $table->increments('book_id');
             $table->string('title');
             $table->string('author');
+			$table->tinyInteger('flag')->default('1')->comment = 'flag active=1, deleted=0';
             $table->timestamps();
+			
         });
     }
 
