@@ -22,14 +22,12 @@ use Excel;
 
 class BookBom {
 
-    private $books = null;
-
     /*
      * @param object $request
      * @return Resultset
      */
     public function processSearch($request) {
-        $books =  $this->books;
+        $book = $this->retrieveBookRecords();
 
         if(isset($request->ddSearchType) && $request->filled('ddSearchType')) {
             if(isset($request->txtKeywords) && $request->filled('txtKeywords')) {
@@ -49,7 +47,7 @@ class BookBom {
     */
     public function processExportToXml($request) {
 
-        $books =  $this->books->get();
+        $books =  $this->retrieveBookRecords()->get();
         $xml = new XMLWriter();
         $xml->openMemory();
         $xml->startDocument();
@@ -81,7 +79,7 @@ class BookBom {
     * @return csv file
    */
     public function processExportToCsv($request) {
-        $books = $this->books->get();
+        $books =  $this->retrieveBookRecords()->get();
         $fileName = "exported_data_" . strtotime(date('Y-m-d H:i:s'));
 
         $bookArray = array();
@@ -103,14 +101,13 @@ class BookBom {
 
     }
 
-    public function setBookRecords() {
-        $this->books = $this->getBookRecords();
-    }
-
-    public function getBookRecords() {
+    /*
+    *
+    * @return Book resultset
+   */
+    public function retrieveBookRecords() {
         return Book::where('flag',1);
     }
-    
 
 
 }
