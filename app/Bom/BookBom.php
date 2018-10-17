@@ -19,6 +19,8 @@ use XMLWriter;
 
 //library to export data to csv file
 use Excel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
 
 class BookBom {
 
@@ -38,6 +40,7 @@ class BookBom {
                 }
             }
         }
+        $book = $book->orderBy('book_id','desc');
         return $book->sortable()->paginate(5);
     }
 
@@ -46,7 +49,6 @@ class BookBom {
      * @return xml file
     */
     public function processExportToXml($request) {
-
         $books =  $this->retrieveBookRecords()->get();
         $xml = new XMLWriter();
         $xml->openMemory();
@@ -75,29 +77,33 @@ class BookBom {
 
 
     /*
+     * Exporting of Book Data in csv format
+     * Used chunk for exporting large data
+     *
     * @param object $request
     * @return csv file
+     *
    */
     public function processExportToCsv($request) {
-        $books =  $this->retrieveBookRecords()->get();
-        $fileName = "exported_data_" . strtotime(date('Y-m-d H:i:s'));
 
-        $bookArray = array();
-        foreach($books as $book) {
-            if($request->ddColumn==1) {
-                $bookArray[] = array("author" => $book->author);
-            } else if($request->ddColumn==2) {
-                $bookArray[] = array("title" => $book->title);
-            } else {
-                $bookArray[] = array("author" => $book->author, "title" => $book->title);
-            }
-        }
+        //condition for export filter
 
-        return Excel::create($fileName, function($excel) use($bookArray) {
-            $excel->sheet('Sheet 1', function($sheet) use($bookArray) {
-                $sheet->fromArray($bookArray,null,'A1',true);
+        $header = $this->processFormattingOfCsvHeader($request);
+
+        $books =  $this->retrieveBookRecords()->orderBy('book_id','desc');
+        return Excel::create('Report', function($excel) use ($books,$header,$request) {
+            $excel->sheet('report', function($sheet) use($books,$header,$request) {
+                $sheet->appendRow($header);
+                $books->chunk(20, function($rows) use ($sheet,$request)
+                {
+                    foreach ($rows as $row)
+                    {
+                        $sheet->appendRow($this->processFormattingOfCsvData($request,$row));
+                    }
+                });
             });
-        })->export('csv');
+        })->download('csv');
+
 
     }
 
@@ -106,8 +112,37 @@ class BookBom {
     * @return Book resultset
    */
     public function retrieveBookRecords() {
-        return Book::where('flag',1);
+        return Book::select('book_id','title','author')->where('flag',1);
     }
-
+    /*
+    * @param object $request
+    * @return  array
+   */
+    private function processFormattingOfCsvHeader($request) {
+        $header = null;
+        if($request->ddColumn==1) {
+            $header = array('title');
+        } else if($request->ddColumn==2) {
+            $header = array('author');
+        } else {
+            $header = array('title','author');
+        }
+        return $header;
+    }
+    /*
+    * @param object $request
+    * @return  array
+   */
+    private function processFormattingOfCsvData($request,$row) {
+        $arrData = null;
+        if($request->ddColumn==1) {
+            $arrData = array($row->title);
+        } else if($request->ddColumn==2) {
+            $arrData = array($row->author);
+        } else {
+            $arrData = array($row->title,$row->author);
+        }
+        return $arrData;
+    }
 
 }
